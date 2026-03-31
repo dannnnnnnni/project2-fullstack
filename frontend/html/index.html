@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проект 2 - Фронтенд + Бэкенд</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .loading {
+            text-align: center;
+            color: #667eea;
+            margin-top: 20px;
+            display: none;
+            font-weight: bold;
+        }
+        .numbers-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: none;
+        }
+        .numbers-container.show {
+            display: block;
+        }
+        .numbers-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .numbers-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+        .number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 20px;
+            padding: 15px;
+            background: #fadbd8;
+            border-radius: 8px;
+            display: none;
+            border-left: 4px solid #e74c3c;
+        }
+        .error.show {
+            display: block;
+        }
+        .info {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            border-left: 4px solid #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Проект 2</h1>
+        <p class="subtitle">Получение случайных чисел с бэкенда</p>
+        
+        <div class="info" id="info">
+            Фронтенд на порту 8081, бэкенд на порту 3000
+        </div>
+        
+        <button onclick="fetchRandomNumbers()" id="fetchBtn">
+            ⚡ Получить 10 случайных чисел
+        </button>
+        
+        <div class="loading" id="loading">
+            ⏳ Загрузка данных...
+        </div>
+        
+        <div class="error" id="error"></div>
+        
+        <div class="numbers-container" id="numbersContainer">
+            <div class="numbers-title">📊 Полученные числа:</div>
+            <div class="numbers-grid" id="numbersGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ВАЖНО: Определяем адрес бэкенда
+         * window.location.hostname - текущий хост (localhost, IP сервера и т.д.)
+         * :3000 - порт где запущен бэкенд
+         * 
+         * Например:
+         * - Локально: http://localhost:3000
+         * - На сервере: http://123.45.67.89:3000
+         */
+        const BACKEND_URL = 'http://' + window.location.hostname + ':3000';
+
+        /**
+         * Функция для получения случайных чисел с бэкенда
+         */
+        async function fetchRandomNumbers() {
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const numbersContainer = document.getElementById('numbersContainer');
+            const numbersGrid = document.getElementById('numbersGrid');
+            const fetchBtn = document.getElementById('fetchBtn');
+
+            errorEl.textContent = '';
+            errorEl.classList.remove('show');
+            
+            // Показываем загрузку
+            loadingEl.style.display = 'block';
+            numbersContainer.classList.remove('show');
+            fetchBtn.disabled = true;
+
+            try {
+                // Делаем запрос к бэкенду
+                const response = await fetch(`${BACKEND_URL}/api/random-numbers`);
+                
+                // Проверяем статус ответа
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // Парсим JSON ответ
+                const data = await response.json();
+                
+                // Очищаем сетку от старых чисел
+                numbersGrid.innerHTML = '';
+                
+                // Добавляем каждое число в сетку
+                data.numbers.forEach((number, index) => {
+                    const numberEl = document.createElement('div');
+                    numberEl.className = 'number';
+                    numberEl.textContent = number;
+                    // Небольшая задержка для красивой анимации
+                    setTimeout(() => {
+                        numbersGrid.appendChild(numberEl);
+                    }, index * 50);
+                });
+                
+                // Показываем контейнер с числами
+                setTimeout(() => {
+                    numbersContainer.classList.add('show');
+                }, data.numbers.length * 50);
+                
+                loadingEl.style.display = 'none';
+                fetchBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                
+                // Показываем ошибку пользователю
+                errorEl.innerHTML = `
+                    ❌ <strong>Ошибка подключения к бэкенду!</strong><br>
+                    ${error.message}<br>
+                    <small>Убедитесь что бэкенд запущен на ${BACKEND_URL}</small>
+                `;
+                errorEl.classList.add('show');
+                loadingEl.style.display = 'none';
+                fetchBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

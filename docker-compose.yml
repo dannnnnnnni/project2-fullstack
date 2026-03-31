@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Сервис бэкенда на Node.js
+  backend:
+    # Собираем образ из Dockerfile в папке backend
+    build: ./backend
+    
+    # Маппируем порты: localhost:3000 -> контейнер:3000
+    ports:
+      - "3000:3000"
+    
+    # Имя контейнера
+    container_name: project2-backend
+    
+    # Переменные окружения
+    environment:
+      - NODE_ENV=production
+    
+    # Сеть для коммуникации между контейнерами
+    networks:
+      - project2-network
+
+  # Сервис фронтенда на Nginx
+  frontend:
+    # Собираем образ из Dockerfile в папке frontend
+    build: ./frontend
+    
+    # Маппируем порты: localhost:8081 -> контейнер:8081
+    ports:
+      - "8081:8081"
+    
+    # Имя контейнера
+    container_name: project2-frontend
+    
+    # Фронтенд зависит от бэкенда (запустится после бэкенда)
+    depends_on:
+      - backend
+    
+    # Подключаем к той же сети что и бэкенд
+    networks:
+      - project2-network
+
+# Определяем сеть для коммуникации контейнеров
+networks:
+  project2-network:
+    driver: bridge
