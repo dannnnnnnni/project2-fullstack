@@ -1,0 +1,14 @@
+# Игнорируем Node.js зависимости
+backend/node_modules/
+
+# Игнорируем логи
+*.log
+npm-debug.log
+
+# Игнорируем файлы ОС
+.DS_Store
+Thumbs.db
+
+# Игнорируем переменные окружения
+.env
+.env.local
